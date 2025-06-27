@@ -3,14 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import { authRoutes } from './routes/auth.js';
-import { analysisRoutes } from './routes/analysis.js';
-import { reportsRoutes } from './routes/reports.js';
-import { chatRoutes } from './routes/chat.js';
-import { uploadRoutes } from './routes/upload.js';
-import { paymentRoutes } from './routes/payment.js';
-import { errorHandler } from './middleware/errorHandler.js';
-import { requestLogger } from './middleware/logging.js';
+import { authRoutes } from './routes/auth';
+import { analysisRoutes } from './routes/analysis';
+import { reportsRoutes } from './routes/reports';
+import { chatRoutes } from './routes/chat';
+import { uploadRoutes } from './routes/upload';
+import { paymentRoutes } from './routes/payment';
+import { errorHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/logging';
 
 dotenv.config();
 
