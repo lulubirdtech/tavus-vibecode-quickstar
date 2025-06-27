@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useDropzone } from 'react-dropzone';
 import { 
@@ -19,14 +19,10 @@ import {
 } from 'lucide-react';
 import TavusAvatar from '../components/TavusAvatar';
 import DoctorSelector from '../components/DoctorSelector';
+import PurchaseModal from '../components/PurchaseModal';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { tavusService } from '../services/tavusService';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
-import TavusAvatar from '../components/TavusAvatar';
-import DoctorSelector from '../components/DoctorSelector';
-import PurchaseModal from '../components/PurchaseModal';
 import toast from 'react-hot-toast';
 
 interface Doctor {
@@ -43,9 +39,6 @@ interface Doctor {
 
 const PhotoDiagnosis: React.FC = () => {
   const { user } = useAuth();
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
-  const { user } = useAuth();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -55,6 +48,7 @@ const PhotoDiagnosis: React.FC = () => {
   const [imageType, setImageType] = useState('');
   const [showPurchaseModal, setShowPurchaseModal] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+
   useEffect(() => {
     if (user?.id) {
       loadDoctors();
@@ -82,34 +76,6 @@ const PhotoDiagnosis: React.FC = () => {
       }
     } catch (err) {
       console.error('Error loading doctors:', err);
-      toast.error('Failed to load doctors');
-    }
-  };
-
-
-  React.useEffect(() => {
-    loadDoctors();
-  }, [user]);
-
-  const loadDoctors = async () => {
-    try {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .rpc('get_available_doctors', { target_user_id: user.id });
-
-      if (error) throw error;
-      
-      // Filter for General Physician and Radiologist
-      const filteredDoctors = (data || []).filter((doctor: Doctor) => 
-        doctor.specialty === 'General Physician' || 
-        doctor.specialty === 'Radiologist' ||
-        doctor.specialty.toLowerCase().includes('radiol')
-      );
-      
-      setDoctors(filteredDoctors);
-    } catch (error) {
-      console.error('Error loading doctors:', error);
       toast.error('Failed to load doctors');
     }
   };
@@ -317,46 +283,17 @@ const PhotoDiagnosis: React.FC = () => {
             {selectedDoctor && (
               <TavusAvatar
                 doctor={selectedDoctor}
-                isActive={false}
+                symptoms={`Image analysis for ${selectedBodyPart || 'medical imaging'} - ${imageType || 'medical image'}`}
+                onConversationStart={handleConversationStart}
+                onConversationEnd={handleConversationEnd}
                 className="h-full"
               />
             )}
           </div>
         </div>
       </motion.div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Doctor Selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="lg:col-span-2"
-        >
-          <DoctorSelector
-            doctors={doctors}
-            selectedDoctor={selectedDoctor}
-            onDoctorSelect={setSelectedDoctor}
-            defaultSpecialty="General Physician"
-          />
-        </motion.div>
-
-        {/* Tavus Avatar */}
-        {selectedDoctor && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="lg:col-span-2"
-          >
-            <TavusAvatar
-              doctor={selectedDoctor}
-              symptoms={`Image analysis for ${selectedBodyPart || 'medical imaging'} - ${imageType || 'medical image'}`}
-              onConversationStart={handleConversationStart}
-              onConversationEnd={handleConversationEnd}
-            />
-          </motion.div>
-        )}
-
         {/* Photo Upload */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
