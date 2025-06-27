@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, Crown, Lock } from 'lucide-react';
+import { ChevronDown, Crown, Lock, Loader } from 'lucide-react';
 
 interface Doctor {
   id: string;
@@ -30,6 +30,7 @@ const DoctorSelector: React.FC<DoctorSelectorProps> = ({
   className = ''
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Filter doctors to show default specialty first
   const defaultDoctor = doctors.find(d => d.specialty === defaultSpecialty);
