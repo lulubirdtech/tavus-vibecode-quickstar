@@ -172,6 +172,7 @@ const Login: React.FC = () => {
             <div className="mt-6 text-center">
               <p className="text-white/80 text-sm">
                 Demo credentials: Use any email and password
+              </p>
               {isLoading ? (isSignUp ? 'Creating Account...' : 'Signing in...') : (isSignUp ? 'Create Account' : 'Sign In')}
             </div>
           </div>
