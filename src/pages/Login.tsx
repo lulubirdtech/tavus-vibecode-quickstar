@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, Navigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Heart, UserPlus } from 'lucide-react';
-import { Heart, Mail, Lock, Eye, EyeOff, Loader } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Heart, UserPlus, Loader } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
 import toast from 'react-hot-toast';
 
 const Login: React.FC = () => {
