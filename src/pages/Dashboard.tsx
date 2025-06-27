@@ -18,6 +18,8 @@ import {
   Shield,
   Stethoscope
 } from 'lucide-react';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const stats = [

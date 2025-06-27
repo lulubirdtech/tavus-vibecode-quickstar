@@ -21,6 +21,8 @@ import TavusAvatar from '../components/TavusAvatar';
 import DoctorSelector from '../components/DoctorSelector';
 import PurchaseModal from '../components/PurchaseModal';
 import { supabase } from '../lib/supabase';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { tavusService } from '../services/tavusService';
 import toast from 'react-hot-toast';
@@ -39,6 +41,7 @@ interface Doctor {
 
 const PhotoDiagnosis: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
