@@ -184,19 +184,7 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
               <button
                 onClick={startConversation}
                 disabled={isConnecting}
-          {/* Futuristic Avatar Video Container */}
-          <div className="relative w-full h-64 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden border-2 border-medical-primary/30 shadow-green-glow">
-            {/* Futuristic UI Elements */}
-            <div className="absolute top-2 left-2 flex space-x-1">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-            </div>
-            
-            <div className="absolute top-2 right-2 text-xs text-green-400 font-mono">
-              {isConnected ? 'LIVE' : 'READY'}
-            </div>
-            
+                className="bg-medical-primary hover:bg-medical-primary/90 text-white px-6 py-3 rounded-full flex items-center justify-center space-x-2 transition-colors">
                 {isConnecting ? (
                   <Loader className="h-4 w-4 animate-spin mr-2" />
                 ) : (
@@ -204,7 +192,6 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
                 )}
                 {isConnecting ? 'Connecting...' : 'Start Consultation'}
               </button>
-                style={{ filter: 'brightness(1.1) contrast(1.1)' }}
             </div>
           </div>
         )}
