@@ -1,166 +1,259 @@
 import React, { useState } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Heart, UserPlus, Loader } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import toast from 'react-hot-toast';
 
-const Login: React.FC = () => {
-  const location = useLocation();
-  const { login, signup, isAuthenticated, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
+export default function Login() {
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false);
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email || !password) {
-      toast.error('Please fill in all fields');
-      return;
-    }
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-    if (isSignUp && !name) {
-      toast.error('Please enter your full name');
-      return;
-    }
-
-    setIsSubmitting(true);
-    
     try {
-      if (isSignUp) {
-        await signup(email, password, name);
-        toast.success('Account created successfully!');
+      if (isLogin) {
+        const result = await signIn(formData.email, formData.password);
+        
+        // Handle different authentication states
+        if (result.error) {
+          if (result.error.message.includes('Email not confirmed')) {
+            setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, try signing up again.');
+          } else if (result.error.message.includes('Invalid login credentials')) {
+            setError('Invalid email or password. Please check your credentials and try again.');
+          } else {
+            setError(`Login failed: ${result.error.message}`);
+          }
+        } else if (result.user) {
+          // Successful login
+          navigate('/dashboard');
+        }
       } else {
-        await login(email, password);
-        toast.success('Successfully logged in!');
+        const result = await signUp(formData.email, formData.password, formData.name);
+        
+        if (result.error) {
+          if (result.error.message.includes('User already registered')) {
+            setError('An account with this email already exists. Please try logging in instead.');
+          } else if (result.error.message.includes('Password should be at least')) {
+            setError('Password must be at least 6 characters long.');
+          } else if (result.error.message.includes('Invalid email')) {
+            setError('Please enter a valid email address.');
+          } else {
+            setError(`Sign up failed: ${result.error.message}`);
+          }
+        } else if (result.user) {
+          // Check if email confirmation is required
+          if (result.user.email_confirmed_at) {
+            // Email already confirmed, redirect to dashboard
+            navigate('/dashboard');
+          } else {
+            // Email confirmation required
+            setSuccess('Account created successfully! Please check your email for a confirmation link. Once confirmed, you can sign in.');
+            setIsLogin(true); // Switch to login mode
+            setFormData({ email: formData.email, password: '', name: '' });
+          }
+        } else {
+          setSuccess('Account created successfully! You can now sign in with your credentials.');
+          setIsLogin(true);
+          setFormData({ email: formData.email, password: '', name: '' });
+        }
       }
-    } catch (error: any) {
-      console.error(isSignUp ? 'Sign up failed:' : 'Login failed:', error);
-      toast.error(error.message || (isSignUp ? 'Sign up failed. Please try again.' : 'Login failed. Please check your credentials.'));
+    } catch (err: any) {
+      console.error('Authentication error:', err);
+      if (err.message.includes('fetch')) {
+        setError('Network error. Please check your internet connection and try again.');
+      } else {
+        setError(`An unexpected error occurred: ${err.message}`);
+      }
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    // Clear errors when user starts typing
+    if (error) setError('');
+    if (success) setSuccess('');
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setSuccess('');
+    setFormData({ email: '', password: '', name: '' });
+  };
+
   return (
-    <div className="min-h-screen bg-white">
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
+        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+          {/* Header */}
           <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-gradient-to-br from-medical-primary to-medical-secondary rounded-2xl flex items-center justify-center mb-4 shadow-medical">
-              <Heart className="h-8 w-8 text-white" />
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Welcome to HealthCare AI</h1>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              {isLogin ? 'Welcome Back' : 'Create Account'}
+            </h1>
             <p className="text-gray-600">
-              {isSignUp ? 'Create your account to get started' : 'Sign in to access your health dashboard'}
+              {isLogin 
+                ? 'Sign in to access your health dashboard' 
+                : 'Join us to start your health journey'
+              }
             </p>
           </div>
 
-          <div className="backdrop-blur-md bg-white/80 rounded-2xl p-8 shadow-medical border border-gray-200">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {isSignUp && (
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <UserPlus className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-primary focus:border-medical-primary transition-colors text-gray-900 placeholder:text-gray-500"
-                      placeholder="Enter your full name"
-                      required={isSignUp}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-primary focus:border-medical-primary transition-colors text-gray-900 placeholder:text-gray-500"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-medical-primary focus:border-medical-primary transition-colors text-gray-900 placeholder:text-gray-500"
-                    placeholder="Enter your password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting || isLoading}
-                className="w-full bg-gradient-to-r from-medical-primary to-medical-secondary text-white py-3 px-4 rounded-xl font-medium hover:from-medical-primary/90 hover:to-medical-secondary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader className="animate-spin h-4 w-4 mr-2" />
-                    {isSignUp ? 'Creating Account...' : 'Signing in...'}
-                  </>
-                ) : (
-                  isSignUp ? 'Create Account' : 'Sign In'
-                )}
-              </button>
-
-              <div className="mt-6 text-center">
-                <p className="text-gray-500 text-sm">
-                  Demo credentials: Use any email and password
-                </p>
-              </div>
-            </form>
-
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => setIsSignUp(!isSignUp)}
-                className="text-medical-primary hover:text-medical-primary/80 font-medium transition-colors"
-              >
-                {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-              </button>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-red-700">{error}</div>
             </div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-start space-x-3">
+              <CheckCircle className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-green-700">{success}</div>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required={!isLogin}
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder="Enter your email"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  placeholder={isLogin ? "Enter your password" : "Create a password (min. 6 characters)"}
+                  minLength={isLogin ? undefined : 6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {!isLogin && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Password must be at least 6 characters long
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>{isLogin ? 'Signing In...' : 'Creating Account...'}</span>
+                </div>
+              ) : (
+                isLogin ? 'Sign In' : 'Create Account'
+              )}
+            </button>
+          </form>
+
+          {/* Toggle Mode */}
+          <div className="mt-6 text-center">
+            <p className="text-gray-600">
+              {isLogin ? "Don't have an account?" : "Already have an account?"}
+              <button
+                onClick={toggleMode}
+                className="ml-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              >
+                {isLogin ? 'Sign Up' : 'Sign In'}
+              </button>
+            </p>
           </div>
+
+          {/* Help Text */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-500">
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </p>
+          </div>
+        </div>
+
+        {/* Additional Help */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600">
+            Having trouble? Contact our support team for assistance.
+          </p>
         </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}
