@@ -15,7 +15,6 @@ export default function Login() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   
-  const { signIn, signUp } = useAuth();
   const { login, signup } = useAuth();
   const navigate = useNavigate();
 
@@ -27,57 +26,34 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const result = await login(formData.email, formData.password);
-        
-        // Handle different authentication states
-        if (result.error) {
-          if (result.error.message.includes('Email not confirmed')) {
-            setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, please contact support for assistance.');
-          } else if (result.error.message.includes('Invalid login credentials')) {
-            setError('Invalid email or password. Please check your credentials and try again.');
-          } else {
-            setError(`Login failed: ${result.error.message}`);
-          }
-        } else if (result.user) {
-          // Successful login
-          navigate('/dashboard');
-        }
+        await login(formData.email, formData.password);
+        // If we reach here, login was successful
+        navigate('/dashboard');
       } else {
-        const result = await signup(formData.email, formData.password, formData.name);
-        
-        if (result.error) {
-          if (result.error.message.includes('User already registered')) {
-            setError('An account with this email already exists. Please try logging in instead.');
-          } else if (result.error.message.includes('Password should be at least')) {
-            setError('Password must be at least 6 characters long.');
-          } else if (result.error.message.includes('Invalid email')) {
-            setError('Please enter a valid email address.');
-          } else {
-            setError(`Sign up failed: ${result.error.message}`);
-          }
-        } else if (result.user) {
-          // Check if email confirmation is required
-          if (result.user.email_confirmed_at) {
-            // Email already confirmed, redirect to dashboard
-            navigate('/dashboard');
-          } else {
-            // Email confirmation required
-            setSuccess('Account created successfully! Please check your email for a confirmation link. Once confirmed, you can sign in.');
-            setIsLogin(true); // Switch to login mode
-            setFormData({ email: formData.email, password: '', name: '' });
-          }
-        } else {
-          setSuccess('Account created successfully! You can now sign in with your credentials.');
-          setIsLogin(true);
-          setFormData({ email: formData.email, password: '', name: '' });
-        }
+        await signup(formData.email, formData.password, formData.name);
+        // If we reach here, signup was successful
+        setSuccess('Account created successfully! You can now sign in with your credentials.');
+        setIsLogin(true);
+        setFormData({ email: formData.email, password: '', name: '' });
       }
     } catch (err: any) {
       console.error('Authentication error:', err);
-      if (err.message.includes('fetch')) {
+      
+      // Handle specific error messages
+      if (err.message.includes('Email not confirmed')) {
+        setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, please contact support for assistance.');
+      } else if (err.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (err.message.includes('User already registered')) {
+        setError('An account with this email already exists. Please try logging in instead.');
+      } else if (err.message.includes('Password should be at least')) {
+        setError('Password must be at least 6 characters long.');
+      } else if (err.message.includes('Invalid email')) {
+        setError('Please enter a valid email address.');
+      } else if (err.message.includes('fetch')) {
         setError('Network error. Please check your internet connection and try again.');
       } else {
-        setError(`An unexpected error occurred: ${err.message}`);
+        setError(isLogin ? `Login failed: ${err.message}` : `Sign up failed: ${err.message}`);
       }
     } finally {
       setLoading(false);
