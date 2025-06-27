@@ -78,8 +78,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const response = await ApiService.login(email, password);
       
-      if (response.token && response.user) {
-        localStorage.setItem('token', response.token);
+      if (response.session?.access_token && response.user) {
+        localStorage.setItem('token', response.session.access_token);
         setUser(response.user);
         setProfile(response.user);
         setAuthState({
@@ -103,8 +103,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const response = await ApiService.register(email, password, name);
       
-      if (response.token && response.user) {
-        localStorage.setItem('token', response.token);
+      if (response.session?.access_token && response.user) {
+        localStorage.setItem('token', response.session.access_token);
         setUser(response.user);
         setProfile(response.user);
         setAuthState({
