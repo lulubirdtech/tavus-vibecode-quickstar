@@ -112,7 +112,7 @@ class TavusService {
   }
 
   isConfigured(): boolean {
-    return !!this.apiKey && this.apiKey !== 'fc8919f4yy46myrmm6';
+    return !!this.apiKey && this.apiKey.length > 10;
   }
 }
 

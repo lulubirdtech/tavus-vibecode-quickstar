@@ -33,6 +33,7 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
   const [isConnecting, setIsConnecting] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sessionDuration, setSessionDuration] = useState(0);
+  const [replicaStatus, setReplicaStatus] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -57,6 +58,26 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
       }
     };
   }, [isConnected]);
+
+  useEffect(() => {
+    if (doctor && tavusService.isConfigured()) {
+      loadReplicaStatus();
+    }
+  }, [doctor]);
+
+  const loadReplicaStatus = async () => {
+    if (!doctor) return;
+    
+    try {
+      const status = await tavusService.getReplicaStatus(doctor.tavus_replica_id);
+      setReplicaStatus(status);
+      if (status.thumbnail_video_url) {
+        setAvatarUrl(status.thumbnail_video_url);
+      }
+    } catch (error) {
+      console.error('Failed to load replica status:', error);
+    }
+  };
 
   const startConversation = async () => {
     if (!tavusService.isConfigured()) {
@@ -121,7 +142,7 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
   };
 
   return (
-    <div className={`backdrop-blur-md bg-glass-white rounded-2xl border-2 border-medical-primary/20 shadow-medical ${className}`}>
+    <div className={`relative bg-gradient-to-br from-medical-primary/10 to-medical-secondary/10 rounded-2xl border-2 border-medical-primary/20 shadow-medical p-6 ${className}`}>
       {/* Header */}
       <div className="p-4 border-b border-white/20">
         <div className="flex items-center justify-between">
@@ -163,8 +184,19 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
               <button
                 onClick={startConversation}
                 disabled={isConnecting}
-                className="bg-gradient-to-r from-medical-primary to-medical-secondary text-white px-6 py-2 rounded-lg font-medium hover:shadow-green-glow transition-all duration-200 flex items-center mx-auto"
-              >
+          {/* Futuristic Avatar Video Container */}
+          <div className="relative w-full h-64 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl overflow-hidden border-2 border-medical-primary/30 shadow-green-glow">
+            {/* Futuristic UI Elements */}
+            <div className="absolute top-2 left-2 flex space-x-1">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+              <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+            
+            <div className="absolute top-2 right-2 text-xs text-green-400 font-mono">
+              {isConnected ? 'LIVE' : 'READY'}
+            </div>
+            
                 {isConnecting ? (
                   <Loader className="h-4 w-4 animate-spin mr-2" />
                 ) : (
@@ -172,6 +204,7 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
                 )}
                 {isConnecting ? 'Connecting...' : 'Start Consultation'}
               </button>
+                style={{ filter: 'brightness(1.1) contrast(1.1)' }}
             </div>
           </div>
         )}
@@ -197,13 +230,25 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
             />
             
             {!isVideoEnabled && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                <div className="text-center text-white">
-                  <VideoOff className="h-12 w-12 mx-auto mb-2" />
-                  <p>Video disabled</p>
+              <div className="w-full h-full flex items-center justify-center relative">
+                {/* Holographic effect background */}
+                <div className="absolute inset-0 bg-gradient-to-r from-medical-primary/20 via-transparent to-medical-secondary/20 animate-pulse"></div>
+                <div className="text-center z-10">
+                  <div className="text-6xl mb-4 filter drop-shadow-lg">{doctor.icon}</div>
+                  <p className="text-green-400 font-mono text-sm">Initializing Avatar...</p>
+                  <div className="mt-2 flex justify-center space-x-1">
+                    <div className="w-1 h-1 bg-green-400 rounded-full animate-bounce"></div>
+                    <div className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
                 </div>
               </div>
             )}
+            
+            {/* Scan lines effect */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-400/5 to-transparent animate-pulse"></div>
+            </div>
 
             {/* Controls */}
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center space-x-3">
