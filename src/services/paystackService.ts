@@ -1,113 +1,118 @@
 class PaystackService {
   public publicKey: string;
+  private baseURL = '/api/payments';
 
   constructor() {
+    // Get public key from environment variable
     this.publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
   }
 
   async initializePayment(data: {
     email: string;
-    amount: number; // in kobo
-    currency?: string;
-    reference?: string;
-    callback_url?: string;
+    amount: number;
+    currency: string;
     metadata?: any;
-  }): Promise<any> {
+  }) {
     try {
-      const response = await fetch('/api/payments/initialize', {
+      const response = await fetch(`${this.baseURL}/initialize`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: data.email,
-          amount: data.amount,
-          currency: data.currency || 'NGN',
-          metadata: data.metadata
-        })
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error(`Paystack API error: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result = await response.json();
-      return result;
+      return await response.json();
     } catch (error) {
-      console.error('Paystack payment initialization failed:', error);
+      console.error('Payment initialization error:', error);
       throw error;
     }
   }
 
-  async verifyPayment(reference: string): Promise<any> {
+  async verifyPayment(reference: string) {
     try {
-      const response = await fetch(`/api/payments/verify/${reference}`, {
+      const response = await fetch(`${this.baseURL}/verify/${reference}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       });
 
       if (!response.ok) {
-        throw new Error(`Paystack verification error: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result = await response.json();
-      return result;
+      return await response.json();
     } catch (error) {
-      console.error('Paystack payment verification failed:', error);
+      console.error('Payment verification error:', error);
       throw error;
     }
   }
 
-  openPaymentModal(data: {
+  openPaymentModal(config: {
     key: string;
     email: string;
     amount: number;
-    currency?: string;
+    currency: string;
     ref: string;
     callback: (response: any) => void;
     onClose: () => void;
   }) {
-    // Load Paystack inline script if not already loaded
-    if (!window.PaystackPop) {
-      const script = document.createElement('script');
-      script.src = 'https://js.paystack.co/v1/inline.js';
-      script.onload = () => this.openModal(data);
-      document.head.appendChild(script);
+    // Check if Paystack script is loaded
+    if (typeof window !== 'undefined' && (window as any).PaystackPop) {
+      const handler = (window as any).PaystackPop.setup({
+        key: config.key,
+        email: config.email,
+        amount: config.amount,
+        currency: config.currency,
+        ref: config.ref,
+        callback: config.callback,
+        onClose: config.onClose,
+      });
+      handler.openIframe();
     } else {
-      this.openModal(data);
+      // Load Paystack script dynamically
+      this.loadPaystackScript().then(() => {
+        const handler = (window as any).PaystackPop.setup({
+          key: config.key,
+          email: config.email,
+          amount: config.amount,
+          currency: config.currency,
+          ref: config.ref,
+          callback: config.callback,
+          onClose: config.onClose,
+        });
+        handler.openIframe();
+      }).catch((error) => {
+        console.error('Failed to load Paystack script:', error);
+        config.onClose();
+      });
     }
   }
 
-  private openModal(data: any) {
-    const handler = window.PaystackPop.setup({
-      key: this.publicKey,
-      email: data.email,
-      amount: data.amount,
-      currency: data.currency || 'NGN',
-      ref: data.ref,
-      callback: data.callback,
-      onClose: data.onClose
-    });
-    handler.openIframe();
-  }
+  private loadPaystackScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if ((window as any).PaystackPop) {
+        resolve();
+        return;
+      }
 
-  generateReference(): string {
-    return `ref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Failed to load Paystack script'));
+      document.head.appendChild(script);
+    });
   }
 
   isConfigured(): boolean {
-    return !!this.publicKey;
-  }
-}
-
-// Extend Window interface for Paystack
-declare global {
-  interface Window {
-    PaystackPop: any;
+    return !!this.publicKey && this.publicKey.length > 10;
   }
 }
 

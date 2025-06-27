@@ -367,6 +367,16 @@ const StartConsultation: React.FC = () => {
               </>
             )}
           </button>
+          
+          {diagnosis && (
+            <button
+              onClick={() => setShowPurchaseModal(true)}
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center"
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              Buy Recommended Medicine & Food
+            </button>
+          )}
         </div>
       </motion.div>
 

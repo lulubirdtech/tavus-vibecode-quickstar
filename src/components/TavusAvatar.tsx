@@ -71,40 +71,38 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
     try {
       const status = await tavusService.getReplicaStatus(doctor.tavus_replica_id);
       setReplicaStatus(status);
-      if (status.thumbnail_video_url) {
-        setAvatarUrl(status.thumbnail_video_url);
-      }
     } catch (error) {
       console.error('Failed to load replica status:', error);
     }
   };
 
   const startConversation = async () => {
-    if (!tavusService.isConfigured()) {
-      setError('Tavus API key not configured. Please check your settings.');
-      return;
-    }
-
     setIsConnecting(true);
     setError(null);
 
     try {
-      const conversation = await tavusService.startConsultation(
-        doctor.tavus_replica_id,
-        doctor.tavus_persona_id
-      );
-
-      setConversationId(conversation.conversation_id);
+      if (tavusService.isConfigured()) {
+        const conversation = await tavusService.startConsultation(
+          doctor.tavus_replica_id,
+          doctor.tavus_persona_id
+        );
+        setConversationId(conversation.conversation_id);
+        
+        // Initialize video stream if available
+        if (conversation.video_url && videoRef.current) {
+          videoRef.current.src = conversation.video_url;
+        }
+      } else {
+        // Demo mode - simulate conversation start
+        const demoConversationId = `demo_${Date.now()}`;
+        setConversationId(demoConversationId);
+      }
+      
       setIsConnected(true);
       setSessionDuration(0);
       
       if (onConversationStart) {
-        onConversationStart(conversation.conversation_id);
-      }
-
-      // Initialize video stream if available
-      if (conversation.video_url && videoRef.current) {
-        videoRef.current.src = conversation.video_url;
+        onConversationStart(conversationId || `demo_${Date.now()}`);
       }
     } catch (error: any) {
       console.error('Failed to start conversation:', error);
@@ -119,7 +117,10 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
 
     setIsConnecting(true);
     try {
-      await tavusService.endConsultation(conversationId);
+      if (tavusService.isConfigured() && !conversationId.startsWith('demo_')) {
+        await tavusService.endConsultation(conversationId);
+      }
+      
       setIsConnected(false);
       setConversationId(null);
       setSessionDuration(0);
@@ -208,21 +209,25 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
 
         {isConnected && (
           <>
-            <video
-              ref={videoRef}
-              className="w-full h-full object-cover"
-              autoPlay
-              muted={isMuted}
-              style={{ display: isVideoEnabled ? 'block' : 'none' }}
-            />
+            {tavusService.isConfigured() && !conversationId?.startsWith('demo_') ? (
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted={isMuted}
+                style={{ display: isVideoEnabled ? 'block' : 'none' }}
+              />
+            ) : null}
             
-            {!isVideoEnabled && (
+            {(!isVideoEnabled || !tavusService.isConfigured() || conversationId?.startsWith('demo_')) && (
               <div className="w-full h-full flex items-center justify-center relative">
                 {/* Holographic effect background */}
                 <div className="absolute inset-0 bg-gradient-to-r from-medical-primary/20 via-transparent to-medical-secondary/20 animate-pulse"></div>
                 <div className="text-center z-10">
                   <div className="text-6xl mb-4 filter drop-shadow-lg">{doctor.icon}</div>
-                  <p className="text-green-400 font-mono text-sm">Initializing Avatar...</p>
+                  <p className="text-green-400 font-mono text-sm">
+                    {tavusService.isConfigured() ? 'Initializing Avatar...' : 'Demo Mode - Avatar Simulation'}
+                  </p>
                   <div className="mt-2 flex justify-center space-x-1">
                     <div className="w-1 h-1 bg-green-400 rounded-full animate-bounce"></div>
                     <div className="w-1 h-1 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -271,10 +276,21 @@ const TavusAvatar: React.FC<TavusAvatarProps> = ({
 
       {/* Error Display */}
       {error && (
-        <div className="p-4 bg-red-50 border-t border-red-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-red-50 border-t border-red-200">
           <div className="flex items-start space-x-2">
             <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
             <div className="text-sm text-red-700">{error}</div>
+          </div>
+        </div>
+      )}
+      
+      {!tavusService.isConfigured() && (
+        <div className="absolute bottom-0 left-0 right-0 p-3 bg-yellow-50 border-t border-yellow-200">
+          <div className="flex items-start space-x-2">
+            <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-yellow-700">
+              Demo mode: Configure Tavus API key in Settings for real avatar consultation
+            </div>
           </div>
         </div>
       )}

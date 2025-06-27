@@ -99,7 +99,7 @@ const Pricing: React.FC = () => {
     }
 
     if (plan.id === 'free') {
-      toast.info('You are already on the free plan');
+      toast('You are already on the free plan');
       return;
     }
 
