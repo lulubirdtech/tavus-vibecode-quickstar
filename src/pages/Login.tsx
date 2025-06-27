@@ -32,7 +32,7 @@ export default function Login() {
         // Handle different authentication states
         if (result.error) {
           if (result.error.message.includes('Email not confirmed')) {
-            setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, try signing up again.');
+            setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, please contact support for assistance.');
           } else if (result.error.message.includes('Invalid login credentials')) {
             setError('Invalid email or password. Please check your credentials and try again.');
           } else {
