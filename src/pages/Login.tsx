@@ -16,6 +16,7 @@ export default function Login() {
   const [success, setSuccess] = useState('');
   
   const { signIn, signUp } = useAuth();
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +27,7 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const result = await signIn(formData.email, formData.password);
+        const result = await login(formData.email, formData.password);
         
         // Handle different authentication states
         if (result.error) {
@@ -42,7 +43,7 @@ export default function Login() {
           navigate('/dashboard');
         }
       } else {
-        const result = await signUp(formData.email, formData.password, formData.name);
+        const result = await signup(formData.email, formData.password, formData.name);
         
         if (result.error) {
           if (result.error.message.includes('User already registered')) {
