@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
           isAuthenticated: true,
         });
-        checkSubscription();
+        await checkSubscription();
       } else {
         throw new Error('Login failed');
       }
@@ -108,6 +108,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
+      // First, sign up the user with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -121,14 +122,52 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data.user) {
-        // Create user profile using safe upsert function
-        try {
-          await supabase.rpc('upsert_user_profile', {
-            p_user_id: data.user.id
-          });
-        } catch (profileError) {
-          console.warn('Profile creation failed:', profileError);
+        // Create user record in our users table
+        const { error: userError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: data.user.id,
+              email: email,
+              name: name,
+              password_hash: 'managed_by_supabase_auth', // Placeholder since Supabase handles this
+              role: 'patient'
+            }
+          ]);
+
+        if (userError) {
+          console.warn('User profile creation failed:', userError);
           // Don't fail signup if profile creation fails
+        }
+
+        // Create user profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              user_id: data.user.id,
+              settings: {},
+              notification_preferences: {
+                newAnalysis: true,
+                voiceAlerts: true,
+                reportUpdates: false,
+                criticalFindings: true
+              },
+              ai_preferences: {
+                apiProvider: "gemini",
+                sensitivity: "standard",
+                defaultModel: "general-practitioner"
+              },
+              display_preferences: {
+                theme: "dark",
+                preset: "standard",
+                zoomLevel: "fit"
+              }
+            }
+          ]);
+
+        if (profileError) {
+          console.warn('Profile creation failed:', profileError);
         }
         
         setUser(data.user as User);
@@ -138,7 +177,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isLoading: false,
           isAuthenticated: true,
         });
-        checkSubscription();
+        await checkSubscription();
       } else {
         throw new Error('Signup failed');
       }
@@ -167,12 +206,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkSubscription = async (): Promise<string> => {
     try {
-      // Simulate subscription check
-      const userSubscription = 'free'; // Default to free
-      setSubscription(userSubscription);
-      return userSubscription;
+      if (!user?.id) return 'free';
+      
+      const { data, error } = await supabase
+        .from('subscriptions')
+        .select('plan_type, status')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .single();
+
+      if (error || !data) {
+        setSubscription('free');
+        return 'free';
+      }
+
+      setSubscription(data.plan_type);
+      return data.plan_type;
     } catch (error) {
       console.error('Error checking subscription:', error);
+      setSubscription('free');
       return 'free';
     }
   };
