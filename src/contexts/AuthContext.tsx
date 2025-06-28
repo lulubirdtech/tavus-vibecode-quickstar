@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthState } from '../types/auth';
-import { ApiService } from '../services/apiService';
+import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
-  user: any | null;
+  user: User | null;
   profile: User | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -17,7 +17,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<User | null>(null);
   const [authState, setAuthState] = useState<AuthState>({
     user: null,
@@ -27,69 +27,76 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [subscription, setSubscription] = useState<string>('free');
 
   useEffect(() => {
-    // Check for existing token on app load
-    const token = localStorage.getItem('token');
-    if (token) {
-      validateToken(token);
-    } else {
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      });
-    }
-  }, []);
-
-  const validateToken = async (token: string) => {
-    try {
-      const userData = await ApiService.validateToken(token);
-      if (userData) {
-        setUser(userData);
-        setProfile(userData);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user as User);
+        setProfile(session.user as User);
         setAuthState({
-          user: userData,
+          user: session.user as User,
           isLoading: false,
           isAuthenticated: true,
         });
         checkSubscription();
       } else {
-        // Token is invalid
-        localStorage.removeItem('token');
         setAuthState({
           user: null,
           isLoading: false,
           isAuthenticated: false,
         });
       }
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      localStorage.removeItem('token');
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      });
-    }
-  };
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user as User);
+          setProfile(session.user as User);
+          setAuthState({
+            user: session.user as User,
+            isLoading: false,
+            isAuthenticated: true,
+          });
+          checkSubscription();
+        } else {
+          setUser(null);
+          setProfile(null);
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+          setSubscription('free');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      const response = await ApiService.login(email, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (response.session?.access_token && response.user) {
-        localStorage.setItem('token', response.session.access_token);
-        setUser(response.user);
-        setProfile(response.user);
+      if (error) throw error;
+      
+      if (data.session?.user) {
+        setUser(data.user as User);
+        setProfile(data.user as User);
         setAuthState({
-          user: response.user,
+          user: data.user as User,
           isLoading: false,
           isAuthenticated: true,
         });
         checkSubscription();
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error('Login failed');
       }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -101,20 +108,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      const response = await ApiService.register(email, password, name);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          }
+        }
+      });
       
-      if (response.session?.access_token && response.user) {
-        localStorage.setItem('token', response.session.access_token);
-        setUser(response.user);
-        setProfile(response.user);
+      if (error) throw error;
+      
+      if (data.user) {
+        setUser(data.user as User);
+        setProfile(data.user as User);
         setAuthState({
-          user: response.user,
+          user: data.user as User,
           isLoading: false,
           isAuthenticated: true,
         });
         checkSubscription();
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error('Signup failed');
       }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -124,11 +140,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      await ApiService.logout();
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      localStorage.removeItem('token');
       setUser(null);
       setProfile(null);
       setAuthState({

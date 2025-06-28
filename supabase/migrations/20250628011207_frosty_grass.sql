@@ -1,21 +1,22 @@
 /*
-  # Fix Database Constraints and Populate Data
+  # Final Complete Database Setup
 
-  1. Schema Fixes
-    - Add proper UNIQUE constraints for ON CONFLICT operations
-    - Ensure all tables have correct constraints
-    
+  1. Schema Setup
+    - Ensure all tables exist with proper constraints
+    - Add required UNIQUE constraints for ON CONFLICT operations
+    - Set up proper RLS policies
+
   2. Data Population
-    - Insert doctors with Tavus integration
-    - Insert comprehensive recommendations
-    - Handle conflicts properly
-    
-  3. Security
-    - Maintain RLS policies
-    - Ensure proper access controls
+    - Insert comprehensive doctors with Tavus integration
+    - Insert medicines, foods, and supplements
+    - Set up proper pricing and categorization
+
+  3. Functions
+    - Create get_available_doctors function
+    - Set up proper permissions
 */
 
--- Add UNIQUE constraint to recommendations table for name
+-- Ensure recommendations table has UNIQUE constraint
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -27,7 +28,7 @@ BEGIN
   END IF;
 END $$;
 
--- Add UNIQUE constraint to doctors table for name and specialty combination
+-- Ensure doctors table has UNIQUE constraint
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -39,11 +40,11 @@ BEGIN
   END IF;
 END $$;
 
--- Clear existing data to avoid conflicts
-DELETE FROM recommendations WHERE TRUE;
-DELETE FROM doctors WHERE TRUE;
+-- Clear existing data to prevent conflicts
+TRUNCATE TABLE recommendations RESTART IDENTITY CASCADE;
+TRUNCATE TABLE doctors RESTART IDENTITY CASCADE;
 
--- Insert doctors with proper escaping
+-- Insert doctors with Tavus integration
 INSERT INTO doctors (name, specialty, description, icon, tavus_replica_id, tavus_persona_id, is_premium, consultation_price) VALUES
 ('Dr. Sarah Johnson', 'General Practitioner', 'Experienced family doctor specializing in primary care, preventive medicine, and holistic health approaches. Available 24/7 for consultations.', '👩‍⚕️', 'rb17cf590e15', 'pdcdad5c5f0e', false, 0.00),
 ('Dr. Michael Chen', 'Radiologist', 'Expert in medical imaging interpretation including X-rays, CT scans, MRI, and ultrasound. Specialized in diagnostic imaging analysis.', '🔬', 'rb17cf590e15', 'pdcdad5c5f0e', true, 15000.00),
@@ -54,28 +55,23 @@ INSERT INTO doctors (name, specialty, description, icon, tavus_replica_id, tavus
 ('Dr. Maria Garcia', 'Pediatrician', 'Children health specialist providing comprehensive care for infants, children, and adolescents.', '👶', 'rb17cf590e15', 'pdcdad5c5f0e', true, 16000.00),
 ('Dr. David Brown', 'Psychiatrist', 'Mental health specialist focusing on psychological disorders, therapy, and mental wellness.', '🧘', 'rb17cf590e15', 'pdcdad5c5f0e', true, 20000.00),
 ('Dr. Jennifer Lee', 'Gynecologist', 'Women health specialist focusing on reproductive health, pregnancy care, and gynecological conditions.', '🤱', 'rb17cf590e15', 'pdcdad5c5f0e', true, 18000.00),
-('Dr. Thomas Anderson', 'Gastroenterologist', 'Digestive system specialist dealing with stomach, liver, and intestinal conditions.', '🫁', 'rb17cf590e15', 'pdcdad5c5f0e', true, 19000.00)
-ON CONFLICT (name, specialty) DO UPDATE SET
-  description = EXCLUDED.description,
-  icon = EXCLUDED.icon,
-  tavus_replica_id = EXCLUDED.tavus_replica_id,
-  tavus_persona_id = EXCLUDED.tavus_persona_id,
-  is_premium = EXCLUDED.is_premium,
-  consultation_price = EXCLUDED.consultation_price;
+('Dr. Thomas Anderson', 'Gastroenterologist', 'Digestive system specialist dealing with stomach, liver, and intestinal conditions.', '🫁', 'rb17cf590e15', 'pdcdad5c5f0e', true, 19000.00);
 
 -- Insert comprehensive recommendations
 INSERT INTO recommendations (name, category, description, price_ngn, price_usd, image_url, tags) VALUES
--- Medicines
-('Paracetamol 500mg (20 tablets)', 'medicine', 'Pain relief and fever reducer tablets', 300, 0.75, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['pain', 'fever', 'headache']),
+-- Essential Medicines
+('Paracetamol 500mg (20 tablets)', 'medicine', 'Pain relief and fever reducer tablets', 300, 0.75, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['pain', 'fever', 'headache', 'essential']),
 ('Ibuprofen 400mg (10 tablets)', 'medicine', 'Anti-inflammatory pain reliever', 450, 1.12, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['pain', 'inflammation', 'fever']),
 ('Vitamin C 1000mg (30 tablets)', 'medicine', 'Immune system booster', 800, 2.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['vitamin', 'immunity', 'antioxidant']),
 ('Zinc Tablets 15mg (30 tablets)', 'medicine', 'Essential mineral supplement', 600, 1.50, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['mineral', 'immunity', 'healing']),
 ('Multivitamin Complex (30 tablets)', 'medicine', 'Complete daily vitamin supplement', 1200, 3.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['vitamin', 'daily', 'health']),
+('Omeprazole 20mg (14 capsules)', 'medicine', 'Acid reflux and heartburn relief', 900, 2.25, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['stomach', 'acid', 'heartburn']),
+('Cetirizine 10mg (10 tablets)', 'medicine', 'Antihistamine for allergies', 350, 0.87, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['allergy', 'antihistamine', 'hay fever']),
 ('Aspirin 75mg (28 tablets)', 'medicine', 'Low-dose aspirin for heart health', 400, 1.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['heart', 'blood', 'prevention']),
 ('Magnesium 250mg (60 tablets)', 'medicine', 'Muscle and nerve function support', 1000, 2.50, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['mineral', 'muscle', 'sleep']),
 ('Probiotics 10 Billion CFU (30 capsules)', 'medicine', 'Digestive health support', 1500, 3.75, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['digestive', 'gut health', 'probiotics']),
 
--- Foods
+-- Healing Foods
 ('Organic Honey (500g)', 'food', 'Pure raw honey with antibacterial properties', 2500, 6.25, 'https://images.pexels.com/photos/1638280/pexels-photo-1638280.jpeg', ARRAY['natural', 'antibacterial', 'sweetener']),
 ('Fresh Ginger Root (250g)', 'food', 'Anti-inflammatory root for digestive health', 800, 2.00, 'https://images.pexels.com/photos/161556/ginger-plant-asia-rhizome-161556.jpeg', ARRAY['anti-inflammatory', 'digestive', 'natural']),
 ('Turmeric Powder (200g)', 'food', 'Golden spice with powerful anti-inflammatory properties', 1200, 3.00, 'https://images.pexels.com/photos/4198015/pexels-photo-4198015.jpeg', ARRAY['anti-inflammatory', 'spice', 'healing']),
@@ -89,7 +85,7 @@ INSERT INTO recommendations (name, category, description, price_ngn, price_usd, 
 ('Oats (1kg)', 'food', 'Fiber-rich whole grain cereal', 1200, 3.00, 'https://images.pexels.com/photos/1295572/pexels-photo-1295572.jpeg', ARRAY['fiber', 'whole grain', 'heart healthy']),
 ('Blueberries (250g)', 'food', 'Antioxidant-rich superfruit', 1500, 3.75, 'https://images.pexels.com/photos/1414110/pexels-photo-1414110.jpeg', ARRAY['antioxidant', 'superfruit', 'brain health']),
 
--- Supplements
+-- Premium Supplements
 ('Moringa Powder (250g)', 'supplement', 'Nutrient-dense African superfood powder', 4500, 11.25, 'https://images.pexels.com/photos/4198015/pexels-photo-4198015.jpeg', ARRAY['superfood', 'africa', 'nutrient-dense']),
 ('Spirulina Tablets (100 tablets)', 'supplement', 'Blue-green algae superfood supplement', 3500, 8.75, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['superfood', 'algae', 'protein']),
 ('Fish Oil Omega-3 (60 capsules)', 'supplement', 'Essential fatty acids for heart and brain health', 2800, 7.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['omega-3', 'heart health', 'brain health']),
@@ -99,15 +95,7 @@ INSERT INTO recommendations (name, category, description, price_ngn, price_usd, 
 ('Echinacea Extract (60 capsules)', 'supplement', 'Immune system support herb', 1800, 4.50, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['immunity', 'herb', 'natural']),
 ('Ginkgo Biloba (60 tablets)', 'supplement', 'Brain health and circulation support', 2400, 6.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['brain health', 'circulation', 'herb']),
 ('Milk Thistle Extract (60 capsules)', 'supplement', 'Liver detox and protection support', 2000, 5.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['liver health', 'detox', 'herb']),
-('Coenzyme Q10 (30 capsules)', 'supplement', 'Cellular energy and heart health support', 3600, 9.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['energy', 'heart health', 'cellular'])
-ON CONFLICT (name) DO UPDATE SET
-  category = EXCLUDED.category,
-  description = EXCLUDED.description,
-  price_ngn = EXCLUDED.price_ngn,
-  price_usd = EXCLUDED.price_usd,
-  image_url = EXCLUDED.image_url,
-  tags = EXCLUDED.tags,
-  in_stock = true;
+('Coenzyme Q10 (30 capsules)', 'supplement', 'Cellular energy and heart health support', 3600, 9.00, 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg', ARRAY['energy', 'heart health', 'cellular']);
 
 -- Create or replace the get_available_doctors function
 CREATE OR REPLACE FUNCTION get_available_doctors(target_user_id UUID DEFAULT NULL)
@@ -187,3 +175,15 @@ CREATE POLICY "Recommendations readable by all"
 CREATE INDEX IF NOT EXISTS idx_doctors_specialty_premium ON doctors(specialty, is_premium);
 CREATE INDEX IF NOT EXISTS idx_recommendations_category_stock ON recommendations(category, in_stock);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON subscriptions(user_id, status, plan_type);
+
+-- Verify data insertion
+DO $$
+DECLARE
+  doctor_count INTEGER;
+  recommendation_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO doctor_count FROM doctors;
+  SELECT COUNT(*) INTO recommendation_count FROM recommendations;
+  
+  RAISE NOTICE 'Successfully inserted % doctors and % recommendations', doctor_count, recommendation_count;
+END $$;
