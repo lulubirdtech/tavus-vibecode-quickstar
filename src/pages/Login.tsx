@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle, Heart } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,32 +27,15 @@ export default function Login() {
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
-        navigate('/dashboard');
+        navigate('/');
       } else {
         await signup(formData.email, formData.password, formData.name);
-        setSuccess('Account created successfully! You can now sign in with your credentials.');
-        setIsLogin(true);
-        setFormData({ email: formData.email, password: '', name: '' });
+        setSuccess('Account created successfully! You are now signed in.');
+        navigate('/');
       }
     } catch (err: any) {
       console.error('Authentication error:', err);
-      
-      // Handle specific error messages
-      if (err.message.includes('Email not confirmed')) {
-        setError('Please check your email and click the confirmation link before signing in.');
-      } else if (err.message.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please check your credentials and try again.');
-      } else if (err.message.includes('User already registered')) {
-        setError('An account with this email already exists. Please try logging in instead.');
-      } else if (err.message.includes('Password should be at least')) {
-        setError('Password must be at least 6 characters long.');
-      } else if (err.message.includes('Invalid email')) {
-        setError('Please enter a valid email address.');
-      } else if (err.message.includes('fetch')) {
-        setError('Network error. Please check your internet connection and try again.');
-      } else {
-        setError(isLogin ? `Login failed: ${err.message}` : `Sign up failed: ${err.message}`);
-      }
+      setError(err.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -111,6 +94,13 @@ export default function Login() {
             </div>
           )}
 
+          {/* Demo Notice */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="text-sm text-blue-700">
+              <strong>Demo Mode:</strong> You can sign in with any email and password (minimum 6 characters). No email verification required.
+            </div>
+          </div>
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {!isLogin && (
@@ -148,7 +138,7 @@ export default function Login() {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder="Enter your email"
+                  placeholder="Enter any email address"
                 />
               </div>
             </div>
@@ -167,8 +157,8 @@ export default function Login() {
                   value={formData.password}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
-                  placeholder={isLogin ? "Enter your password" : "Create a password (min. 6 characters)"}
-                  minLength={isLogin ? undefined : 6}
+                  placeholder="Enter any password (min. 6 characters)"
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -178,11 +168,9 @@ export default function Login() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {!isLogin && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Password must be at least 6 characters long
-                </p>
-              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Password must be at least 6 characters long
+              </p>
             </div>
 
             <button
@@ -217,7 +205,7 @@ export default function Login() {
           {/* Help Text */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-500">
-              By continuing, you agree to our Terms of Service and Privacy Policy
+              This is a demo application. No real authentication is required.
             </p>
           </div>
         </div>
@@ -225,7 +213,7 @@ export default function Login() {
         {/* Additional Help */}
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Having trouble? Contact our support team for assistance.
+            Demo Mode: Use any email and password to access the application.
           </p>
         </div>
       </div>
