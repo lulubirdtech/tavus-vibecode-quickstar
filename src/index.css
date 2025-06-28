@@ -1,0 +1,71 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+#root {
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Medical theme colors */
+.text-medical-primary {
+  color: #10b981;
+}
+
+.text-medical-secondary {
+  color: #059669;
+}
+
+.bg-medical-primary {
+  background-color: #10b981;
+}
+
+.bg-medical-secondary {
+  background-color: #059669;
+}
+
+.bg-medical-light {
+  background-color: #d1fae5;
+}
+
+.border-medical-primary {
+  border-color: #10b981;
+}
+
+.shadow-medical {
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+}
+
+.shadow-green-glow {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.bg-glass-white {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+}
