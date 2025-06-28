@@ -217,16 +217,14 @@ const StartConsultation: React.FC = () => {
     
     // Save consultation to database
     try {
-      const { error } = await supabase
-        .from('consultations')
-        .insert({
-          user_id: user?.id,
-          doctor_id: selectedDoctor?.id,
-          doctor_type: selectedDoctor?.specialty || 'General Physician',
-          symptoms: symptoms || 'General consultation',
-          tavus_conversation_id: conversationId,
-          status: 'active'
-        });
+      const { error } = await supabase.rpc('upsert_consultation', {
+        p_user_id: user?.id,
+        p_doctor_id: selectedDoctor?.id,
+        p_doctor_type: selectedDoctor?.specialty || 'General Physician',
+        p_symptoms: symptoms || 'General consultation',
+        p_tavus_conversation_id: conversationId,
+        p_status: 'active'
+      });
 
       if (error) throw error;
     } catch (error) {

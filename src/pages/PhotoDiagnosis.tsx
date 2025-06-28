@@ -112,16 +112,14 @@ const PhotoDiagnosis: React.FC = () => {
     
     // Save consultation to database
     try {
-      const { error } = await supabase
-        .from('consultations')
-        .insert({
-          user_id: user?.id,
-          doctor_id: selectedDoctor?.id,
-          doctor_type: selectedDoctor?.specialty || 'Radiologist',
-          symptoms: `Image analysis consultation for ${selectedBodyPart || 'unknown body part'}`,
-          tavus_conversation_id: conversationId,
-          status: 'active'
-        });
+      const { error } = await supabase.rpc('upsert_consultation', {
+        p_user_id: user?.id,
+        p_doctor_id: selectedDoctor?.id,
+        p_doctor_type: selectedDoctor?.specialty || 'Radiologist',
+        p_symptoms: `Image analysis consultation for ${selectedBodyPart || 'unknown body part'}`,
+        p_tavus_conversation_id: conversationId,
+        p_status: 'active'
+      });
 
       if (error) throw error;
     } catch (error) {

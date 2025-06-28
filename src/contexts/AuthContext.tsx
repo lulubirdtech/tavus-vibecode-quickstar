@@ -121,6 +121,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data.user) {
+        // Create user profile using safe upsert function
+        try {
+          await supabase.rpc('upsert_user_profile', {
+            p_user_id: data.user.id
+          });
+        } catch (profileError) {
+          console.warn('Profile creation failed:', profileError);
+          // Don't fail signup if profile creation fails
+        }
+        
         setUser(data.user as User);
         setProfile(data.user as User);
         setAuthState({

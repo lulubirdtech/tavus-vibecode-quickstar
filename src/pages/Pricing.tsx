@@ -155,20 +155,16 @@ const Pricing: React.FC = () => {
         ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
         : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 365 days
 
-      const { error } = await supabase
-        .from('subscriptions')
-        .insert({
-          user_id: user?.id,
-          plan_type: plan.id,
-          status: 'active',
-          start_date: new Date().toISOString(),
-          end_date: endDate.toISOString(),
-          price: plan.priceNgn,
-          currency: 'NGN',
-          payment_provider: 'paystack',
-          payment_id: reference,
-          auto_renew: true
-        });
+      const { error } = await supabase.rpc('upsert_user_subscription', {
+        p_user_id: user?.id,
+        p_plan_type: plan.id,
+        p_status: 'active',
+        p_price: plan.priceNgn,
+        p_currency: 'NGN',
+        p_payment_provider: 'paystack',
+        p_payment_id: reference,
+        p_end_date: endDate.toISOString()
+      });
 
       if (error) throw error;
     } catch (error) {

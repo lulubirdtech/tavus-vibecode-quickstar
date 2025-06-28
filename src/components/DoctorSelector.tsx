@@ -20,6 +20,7 @@ interface DoctorSelectorProps {
   onDoctorSelect: (doctor: Doctor) => void;
   defaultSpecialty?: string;
   className?: string;
+  showOnlyTypes?: string[];
 }
 
 const DoctorSelector: React.FC<DoctorSelectorProps> = ({
@@ -27,14 +28,20 @@ const DoctorSelector: React.FC<DoctorSelectorProps> = ({
   selectedDoctor,
   onDoctorSelect,
   defaultSpecialty = 'General Physician',
-  className = ''
+  className = '',
+  showOnlyTypes
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter doctors based on showOnlyTypes if provided
+  const filteredDoctors = showOnlyTypes 
+    ? doctors.filter(d => showOnlyTypes.includes(d.specialty))
+    : doctors;
+
   // Filter doctors to show default specialty first
-  const defaultDoctor = doctors.find(d => d.specialty === defaultSpecialty);
-  const otherDoctors = doctors.filter(d => d.specialty !== defaultSpecialty);
+  const defaultDoctor = filteredDoctors.find(d => d.specialty === defaultSpecialty);
+  const otherDoctors = filteredDoctors.filter(d => d.specialty !== defaultSpecialty);
 
   // Set default doctor if none selected
   React.useEffect(() => {
