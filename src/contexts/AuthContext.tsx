@@ -27,72 +27,77 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [subscription, setSubscription] = useState<string>('free');
 
   useEffect(() => {
-    // Check for existing session in localStorage
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setProfile(userData);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user as User);
+        setProfile(session.user as User);
         setAuthState({
-          user: userData,
+          user: session.user as User,
           isLoading: false,
           isAuthenticated: true,
         });
         checkSubscription();
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('auth_user');
+      } else {
         setAuthState({
           user: null,
           isLoading: false,
           isAuthenticated: false,
         });
       }
-    } else {
-      setAuthState({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      });
-    }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user as User);
+          setProfile(session.user as User);
+          setAuthState({
+            user: session.user as User,
+            isLoading: false,
+            isAuthenticated: true,
+          });
+          checkSubscription();
+        } else {
+          setUser(null);
+          setProfile(null);
+          setAuthState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+          });
+          setSubscription('free');
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Simple validation - accept any email/password combination
-      if (!email || !password) {
-        throw new Error('Please enter both email and password');
-      }
-
-      if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters long');
-      }
-
-      // Create a simple user object
-      const userData: User = {
-        id: `user_${Date.now()}`,
-        email: email,
-        name: email.split('@')[0], // Use email prefix as name
-        role: 'patient',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Store in localStorage
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-
-      setUser(userData);
-      setProfile(userData);
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        isAuthenticated: true,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
       
-      await checkSubscription();
+      if (error) throw error;
+      
+      if (data.session?.user) {
+        setUser(data.user as User);
+        setProfile(data.user as User);
+        setAuthState({
+          user: data.user as User,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+        checkSubscription();
+      } else {
+        throw new Error('Login failed');
+      }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;
@@ -103,37 +108,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setAuthState(prev => ({ ...prev, isLoading: true }));
     
     try {
-      // Simple validation
-      if (!email || !password || !name) {
-        throw new Error('Please fill in all fields');
-      }
-
-      if (password.length < 6) {
-        throw new Error('Password must be at least 6 characters long');
-      }
-
-      // Create a simple user object
-      const userData: User = {
-        id: `user_${Date.now()}`,
-        email: email,
-        name: name,
-        role: 'patient',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      // Store in localStorage
-      localStorage.setItem('auth_user', JSON.stringify(userData));
-
-      setUser(userData);
-      setProfile(userData);
-      setAuthState({
-        user: userData,
-        isLoading: false,
-        isAuthenticated: true,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name,
+          }
+        }
       });
       
-      await checkSubscription();
+      if (error) throw error;
+      
+      if (data.user) {
+        // Create user profile using safe upsert function
+        try {
+          await supabase.rpc('upsert_user_profile', {
+            p_user_id: data.user.id
+          });
+        } catch (profileError) {
+          console.warn('Profile creation failed:', profileError);
+          // Don't fail signup if profile creation fails
+        }
+        
+        setUser(data.user as User);
+        setProfile(data.user as User);
+        setAuthState({
+          user: data.user as User,
+          isLoading: false,
+          isAuthenticated: true,
+        });
+        checkSubscription();
+      } else {
+        throw new Error('Signup failed');
+      }
     } catch (error) {
       setAuthState(prev => ({ ...prev, isLoading: false }));
       throw error;
@@ -142,7 +150,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
-      localStorage.removeItem('auth_user');
+      await supabase.auth.signOut();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
@@ -159,13 +167,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkSubscription = async (): Promise<string> => {
     try {
-      // Simple subscription check - default to free
-      const userSubscription = 'free';
+      // Simulate subscription check
+      const userSubscription = 'free'; // Default to free
       setSubscription(userSubscription);
       return userSubscription;
     } catch (error) {
       console.error('Error checking subscription:', error);
-      setSubscription('free');
       return 'free';
     }
   };
