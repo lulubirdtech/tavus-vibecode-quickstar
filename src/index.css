@@ -7,9 +7,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: light;
+  color: rgba(0, 0, 0, 0.87);
+  background-color: #ffffff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,15 +24,16 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: #ffffff;
 }
 
 #root {
   width: 100%;
   margin: 0 auto;
-  text-align: center;
+  text-align: left;
 }
 
-/* Medical theme colors */
+/* Clean medical theme colors */
 .text-medical-primary {
   color: #10b981;
 }
@@ -58,14 +59,15 @@ body {
 }
 
 .shadow-medical {
-  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1), 0 4px 6px -2px rgba(16, 185, 129, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
 }
 
 .shadow-green-glow {
   box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
 }
 
+/* Clean glass effect */
 .bg-glass-white {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
 }

@@ -18,8 +18,6 @@ import {
   Shield,
   Stethoscope
 } from 'lucide-react';
-import { UpgradePrompt } from '../components/UpgradePrompt';
-import { useNavigate } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const stats = [
@@ -116,7 +114,7 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
+    <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <motion.div
@@ -136,10 +134,10 @@ const Dashboard: React.FC = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 border border-green-200 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <div className="flex items-center">
-                  <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color} shadow-lg`}>
+                  <div className={`p-3 rounded-lg bg-gradient-to-r ${stat.color} shadow-sm`}>
                     <stat.icon className="h-6 w-6 text-white" />
                   </div>
                   <div className="ml-4 flex-1">
@@ -163,7 +161,7 @@ const Dashboard: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-white rounded-xl border border-green-200 shadow-lg p-6"
+            className="bg-white rounded-xl border border-gray-200 shadow-sm p-6"
           >
             <h2 className="text-xl font-semibold text-gray-800 mb-6">How can I help you today?</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -176,7 +174,7 @@ const Dashboard: React.FC = () => {
                 >
                   <Link 
                     to={action.href}
-                    className="block p-6 rounded-lg bg-green-50 hover:bg-green-100 transition-all duration-200 text-left border border-green-200 hover:border-green-300 group hover:shadow-lg"
+                    className="block p-6 rounded-lg bg-green-50 hover:bg-green-100 transition-all duration-200 text-left border border-green-200 hover:border-green-300 group hover:shadow-sm"
                   >
                     <div className={`p-3 rounded-lg bg-gradient-to-r ${action.color} w-fit mb-4 group-hover:scale-110 transition-transform`}>
                       <action.icon className="h-6 w-6 text-white" />
@@ -196,9 +194,9 @@ const Dashboard: React.FC = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="lg:col-span-2 bg-white rounded-xl border border-green-200 shadow-lg"
+              className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm"
             >
-              <div className="p-6 border-b border-green-100">
+              <div className="p-6 border-b border-gray-100">
                 <h2 className="text-xl font-semibold text-gray-800">Recent Health Consultations</h2>
               </div>
               <div className="p-6">
@@ -206,7 +204,7 @@ const Dashboard: React.FC = () => {
                   {recentConsultations.map((consultation) => (
                     <div
                       key={consultation.id}
-                      className="flex items-center p-4 rounded-lg bg-green-50 hover:bg-green-100 transition-colors cursor-pointer border border-green-200 hover:border-green-300"
+                      className="flex items-center p-4 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200"
                     >
                       <div className="flex-shrink-0">
                         {consultation.status === 'resolved' && (
@@ -234,9 +232,9 @@ const Dashboard: React.FC = () => {
                         </p>
                         <div className="mt-2">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            consultation.status === 'resolved' ? 'bg-green-100 text-green-800 border border-green-300' :
-                            consultation.status === 'treated' ? 'bg-green-100 text-green-800 border border-green-300' :
-                            'bg-green-100 text-green-800 border border-green-300'
+                            consultation.status === 'resolved' ? 'bg-green-100 text-green-800' :
+                            consultation.status === 'treated' ? 'bg-blue-100 text-blue-800' :
+                            'bg-yellow-100 text-yellow-800'
                           }`}>
                             {consultation.status.charAt(0).toUpperCase() + consultation.status.slice(1)}
                           </span>
@@ -255,9 +253,9 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="space-y-6"
             >
-              <div className="bg-white rounded-xl border border-green-200 shadow-lg p-6">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">Daily Health Tip</h2>
-                <div className="bg-gradient-to-r from-green-100 to-green-50 rounded-lg p-4 border border-green-200">
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
                   <div className="flex items-start">
                     <Thermometer className="h-5 w-5 text-green-600 mt-1 mr-3" />
                     <div>
@@ -270,7 +268,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-red-50 rounded-xl border border-red-200 shadow-lg p-6">
+              <div className="bg-red-50 rounded-xl border border-red-200 shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-red-800 mb-3 flex items-center">
                   <AlertTriangle className="h-5 w-5 mr-2" />
                   Emergency Guide
@@ -286,7 +284,7 @@ const Dashboard: React.FC = () => {
                 </Link>
               </div>
 
-              <div className="bg-green-50 rounded-xl border border-green-200 shadow-lg p-6">
+              <div className="bg-green-50 rounded-xl border border-green-200 shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-green-800 mb-3 flex items-center">
                   <Shield className="h-5 w-5 mr-2" />
                   Prevention Tips

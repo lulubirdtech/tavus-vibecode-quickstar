@@ -27,11 +27,9 @@ export default function Login() {
     try {
       if (isLogin) {
         await login(formData.email, formData.password);
-        // If we reach here, login was successful
-        navigate('/dashboard');
+        navigate('/');
       } else {
         await signup(formData.email, formData.password, formData.name);
-        // If we reach here, signup was successful
         setSuccess('Account created successfully! You can now sign in with your credentials.');
         setIsLogin(true);
         setFormData({ email: formData.email, password: '', name: '' });
@@ -39,19 +37,14 @@ export default function Login() {
     } catch (err: any) {
       console.error('Authentication error:', err);
       
-      // Handle specific error messages
       if (err.message.includes('Email not confirmed')) {
-        setError('Please check your email and click the confirmation link before signing in. If you haven\'t received the email, please contact support for assistance.');
+        setError('Please check your email and click the confirmation link before signing in.');
       } else if (err.message.includes('Invalid login credentials')) {
         setError('Invalid email or password. Please check your credentials and try again.');
       } else if (err.message.includes('User already registered')) {
         setError('An account with this email already exists. Please try logging in instead.');
       } else if (err.message.includes('Password should be at least')) {
         setError('Password must be at least 6 characters long.');
-      } else if (err.message.includes('Invalid email')) {
-        setError('Please enter a valid email address.');
-      } else if (err.message.includes('fetch')) {
-        setError('Network error. Please check your internet connection and try again.');
       } else {
         setError(isLogin ? `Login failed: ${err.message}` : `Sign up failed: ${err.message}`);
       }
@@ -65,7 +58,6 @@ export default function Login() {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Clear errors when user starts typing
     if (error) setError('');
     if (success) setSuccess('');
   };
@@ -78,12 +70,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <div className="bg-white rounded-xl shadow-sm p-8 border border-gray-200">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center mx-auto mb-4">
               <Mail className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -129,7 +121,7 @@ export default function Login() {
                     required={!isLogin}
                     value={formData.name}
                     onChange={handleInputChange}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -149,7 +141,7 @@ export default function Login() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                   placeholder="Enter your email"
                 />
               </div>
@@ -168,7 +160,7 @@ export default function Login() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors"
                   placeholder={isLogin ? "Enter your password" : "Create a password (min. 6 characters)"}
                   minLength={isLogin ? undefined : 6}
                 />
@@ -190,7 +182,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-lg font-medium hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -209,7 +201,7 @@ export default function Login() {
               {isLogin ? "Don't have an account?" : "Already have an account?"}
               <button
                 onClick={toggleMode}
-                className="ml-2 text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="ml-2 text-green-600 hover:text-green-700 font-medium transition-colors"
               >
                 {isLogin ? 'Sign Up' : 'Sign In'}
               </button>
@@ -222,13 +214,6 @@ export default function Login() {
               By continuing, you agree to our Terms of Service and Privacy Policy
             </p>
           </div>
-        </div>
-
-        {/* Additional Help */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Having trouble? Contact our support team for assistance.
-          </p>
         </div>
       </div>
     </div>

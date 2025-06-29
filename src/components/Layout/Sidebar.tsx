@@ -27,7 +27,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="bg-white w-64 min-h-screen shadow-lg border-r border-green-200">
+    <div className="bg-white w-64 min-h-screen shadow-sm border-r border-gray-200">
       <div className="p-6">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
@@ -50,7 +50,7 @@ const Sidebar: React.FC = () => {
                 to={item.href}
                 className={`group flex items-center px-3 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
+                    ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm'
                     : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
                 }`}
               >

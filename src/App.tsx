@@ -21,7 +21,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-medical-light">
+          <div className="min-h-screen bg-white">
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Layout />}>
